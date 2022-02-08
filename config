@@ -1,0 +1,137 @@
+##########nginx
+check process nginx
+  with pidfile /run/nginx.pid
+  start program = "/bin/systemctl  start nginx.service"
+  stop program  = "/bin/systemctl  stop nginx.service"
+  if failed host 127.0.0.1 port 80 for 2 cycles then restart
+
+##########mongodb
+check process mongodb
+  with pidfile "/run/mongodb/mongod.pid"
+  start program = "/bin/systemctl start mongod"
+  stop program = "/bin/systemctl stop mongod"
+  #if failed port 27017 protocol MONGODB for 3 cycles then restart
+  #if memory usage > 27% then alert
+  #if memory usage > 40% then restart
+
+
+##########mariadb
+check process mariadb
+  with pidfile "/var/lib/mysql/ip-172-31-18-82.pid"
+  start program = "/bin/systemctl start mariadb"
+  stop program = "/bin/systemctl stop mariadb"
+  if failed port 3306 protocol MYSQL for 3 cycles then restart
+
+##########php-fpm
+check process php-fpm with pidfile  /var/opt/remi/php72/run/php-fpm/php-fpm.pid
+  start program = "/bin/systemctl  start php72-php-fpm.service"
+  stop program  = "/bin/systemctl  stop php72-php-fpm.service"
+  if failed host 127.0.0.1 port 9000 for 2 cycles then restart
+
+##########redis
+check process redis with pidfile /run/redis/redis.pid
+#check host 103 with address 127.0.0.1
+  start program = "/bin/systemctl start redis"
+  stop program = "/bin/systemctl stop redis"
+  if failed port 6379 type tcp for 2 cycles then restart
+
+
+########### sentinel
+check process sentinel with pidfile  /var/run/redis/sentinel.pid
+  start program = "/bin/systemctl  start redis-sentinel"
+  stop program  = "/bin/systemctl  stop redis-sentinel"
+  if failed host 10.10.0.34 port 16380 for 2 cycles then restart
+
+
+##########emqx
+check host emqx with address 127.0.0.1
+  start program = "/usr/sbin/emqttd  start"
+  stop program = "/usr/sbin/emqttd  stop"
+  if failed port 18083 type tcp for 2 cycles then restart
+
+##########haproxy
+check process haproxy with pidfile /run/haproxy.pid
+  start program = "/bin/systemctl  start haproxy"
+  stop program  = "/bin/systemctl  stop haproxy"
+  if failed host 127.0.0.1 port 6443 type tcp for 2 cycles then restart
+
+
+##########keepalived
+check process keepalived with pidfile /var/run/keepalived.pid
+   start program = "/bin/systemctl start keepalived"
+   stop program = "/bin/systemctl stop keepalived"
+
+##########rabbitmq
+check process rabbitmq with pidfile "/var/lib/rabbitmq/mnesia/rabbit@ip-172-31-18-82.pid"
+  start program = "/bin/systemctl  start rabbitmq-server"
+  stop program  = "/bin/systemctl  stop rabbitmq-server"
+  if failed host 127.0.0.1 port 5672 for 2 cycles then restart
+
+
+##########Kafka
+check host kafka-db-01 with address 127.0.0.1
+start program = "/bin/systemctl start kafka"
+stop program = "/bin/systemctl stop kafka"
+if failed port 7071 type tcp for 2 cycles then restart
+
+########### amqproxy
+check host amqproxy with address 127.0.0.1
+start program = "/bin/systemctl start amqproxy"
+stop program = "/bin/systemctl stop amqproxy"
+if failed port 5673 type tcp for 2 cycles then restart
+
+
+##########zookeeper
+check host zookeeper-db-01 with address 127.0.0.1
+start program = "/bin/systemctl start zookeeper"
+stop program = "/bin/systemctl stop zookeeper"
+if failed port 2181 type tcp for 2 cycles then restart
+
+
+########system
+check system $HOST
+	if memory usage > 90% for 5 cycles then alert
+	if swap usage > 25% for 5 cycles then alert
+	if cpu usage > 90% for 5 cycles then alert
+	if loadavg(5min) greater than 4 for 5 cycles then alert
+
+
+
+###########Apache
+check process httpd with pidfile /etc/httpd/run/httpd.pid
+	start program = "/usr/bin/systemctl start httpd"
+	stop program = "/usr/bin/systemctl stop httpd"
+	restart program = "/usr/bin/systemctl restart httpd"
+	if failed host 127.0.0.1 port 80 protocol http
+		and request "/monit.html" with timeout 10 seconds then restart
+	if 3 restarts within 5 cycles then timeout
+
+
+
+############MariaDB
+check process mariadb with pidfile /var/run/mariadb/mariadb.pid
+	start program = "/usr/bin/systemctl start mariadb"
+	stop program = "/usr/bin/systemctl stop mariadb"
+	restart program = "/usr/bin/systemctl restart mariadb"
+	if failed host 127.0.0.1 port 3306 then restart
+	if 3 restarts within 5 cycles then timeout
+
+
+
+
+############Memcached
+#   See: https://bugs.centos.org/view.php?id=9570
+check process memcached with pidfile /var/run/memcached/memcached.pid
+	start program = "/usr/bin/systemctl start memcached"
+	stop program = "/usr/bin/systemctl stop memcached"
+	if failed host 127.0.0.1 port 11211 protocol MEMCACHE then restart
+	if memory usage > 90% for 5 cycles then restart
+	if 3 restarts within 5 cycles then timeout
+
+
+################Node.js worker
+check process node_worker1 matching /home/www/domain/public_html/app.js
+	start program = "/bin/su - www -c 'pm2 start /home/www/domain/public_html/app.js'"
+	stop program = "/bin/su - www -c 'pm2 start /home/www/domain/public_html/app.js'"
+	if cpu > 90% for 3 cycles then restart
+	if 3 restarts within 5 cycles then timeout

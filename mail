@@ -1,0 +1,23 @@
+##################################trunglv
+
+set mailserver smtp.gmail.com port 587
+    username "monitor-boot@lumi.biz" password "Lumivn@2019"
+    using tls
+
+
+set mail-format {
+   from:    Monit <monit@$HOST>
+   subject: monit alert -EFL Monitor-  $EVENT $SERVICE
+   message: $EVENT Service $SERVICE
+                 Date:        $DATE
+                 Action:      $ACTION
+                 Host:        $HOST
+                 Description: $DESCRIPTION
+
+            From kilo with love,
+            Monit
+ }
+
+
+set alert huanvd@lumi.biz
+set alert trunglv@lumi.biz
